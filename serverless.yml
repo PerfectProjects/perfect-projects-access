@@ -1,4 +1,4 @@
-service: perfect-projects-access
+service: ${self:custom.prefix}-access
 
 frameworkVersion: '2'
 
@@ -6,19 +6,25 @@ provider:
   name: aws
   runtime: python3.8
   lambdaHashingVersion: 20201221
+  region: ${opt:region}
+  stage: ${opt:stage}
+  stackName: ${self:custom.prefix}-access
   iam:
     role:
-      name: perfect-project-access-role
+      name: ${self:custom.prefix}-access-role
       statements:
         - Effect: 'Allow'
           Resource: '*'
           Action: 'iam:DeleteBucket'
   deploymentBucket:
-    name: perfect-project-access
+    name: perfect-projects-deployments
 
 
 plugins:
   - serverless-deployment-bucket
+
+custom:
+  prefix: perfect-projects-${self:provider.stage}-${self:provider.region}
 
 resources:
   Resources:
@@ -32,12 +38,12 @@ resources:
           - email
         UsernameConfiguration:
           CaseSensitive: False
-        UserPoolName: perfect-projects-user-pool
+        UserPoolName: ${self:custom.prefix}-user-pool
     PerfectProjectUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
         AccessTokenValidity: 5
-        ClientName: PerfectProjects
+        ClientName: ${self:custom.prefix}
         ExplicitAuthFlows:
           - ALLOW_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
@@ -45,7 +51,7 @@ resources:
         IdTokenValidity: 5
         PreventUserExistenceErrors: ENABLED
         RefreshTokenValidity: 30
-        UserPoolId: eu-central-1_l7dofglk5
+        UserPoolId: !Ref PerfectProjectsUserPool
         TokenValidityUnits:
           AccessToken: minutes
           IdToken: minutes
